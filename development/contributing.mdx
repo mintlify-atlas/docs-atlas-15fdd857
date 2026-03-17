@@ -1,0 +1,179 @@
+---
+title: Contributing
+description: How to contribute to skyhan.cloud — branch workflow, commit conventions, code style, and pull request process.
+---
+
+Contributions are welcome. This page covers everything you need to get from a fresh clone to an open pull request.
+
+## Prerequisites
+
+Before you start, make sure you have the following installed:
+
+- **Node.js** 18 or later
+- **pnpm** 9 or later (`npm install -g pnpm`)
+- **Git**
+
+## Fork and clone
+
+<Steps>
+  <Step title="Fork the repository">
+    Go to [github.com/skyhancloud/skyhan.cloud](https://github.com/skyhancloud/skyhan.cloud) and click **Fork**.
+  </Step>
+  <Step title="Clone your fork">
+    ```bash
+    git clone https://github.com/<your-username>/skyhan.cloud.git
+    cd skyhan.cloud
+    ```
+  </Step>
+  <Step title="Install dependencies">
+    ```bash
+    pnpm install
+    ```
+  </Step>
+  <Step title="Set up environment variables">
+    ```bash
+    cp .env.example .env.local
+    ```
+    See [Configuration](/development/configuration) for a full description of each variable.
+  </Step>
+  <Step title="Start the development server">
+    ```bash
+    pnpm dev
+    ```
+    The site is available at `http://localhost:3000`.
+  </Step>
+</Steps>
+
+## Branch naming
+
+Create a new branch for every change. Branch names should follow this pattern:
+
+```
+<type>/<short-description>
+```
+
+**Examples:**
+
+```
+feat/add-contact-form
+fix/discord-status-timestamp
+chore/update-dependencies
+docs/contributing-guide
+```
+
+Always branch from `main` and open your pull request back against `main`.
+
+## Commit message conventions
+
+This project enforces [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) via `commitlint`. Every commit message must match the following format:
+
+```
+<type>(<optional scope>): <description>
+```
+
+### Commit types
+
+| Type | When to use |
+|---|---|
+| `feat` | A new feature or user-visible improvement |
+| `fix` | A bug fix |
+| `chore` | Maintenance tasks, dependency updates, tooling changes |
+| `docs` | Documentation changes only |
+| `refactor` | Code restructuring with no behavior change |
+| `test` | Adding or updating tests |
+| `ci` | CI/CD pipeline changes |
+| `revert` | Reverting a previous commit |
+
+### Examples from the changelog
+
+```
+feat: add selfie image to header
+feat(analytics): add custom events
+feat(component/discord-status): add hide prop and integrate into blog layout
+fix(discord-status): correct last seen timestamp conversion to milliseconds
+fix: update link and icon colors for better visibility
+chore: update next dependency from version 15.0.5 to 15.0.7
+```
+
+<Tip>
+Keep the description concise — one sentence, lowercase, no trailing period. Use a scope in parentheses when the change is limited to a specific component or subsystem.
+</Tip>
+
+## Code style
+
+Code style is enforced by ESLint. The ruleset extends:
+
+- `eslint:recommended`
+- `plugin:react/recommended` with JSX runtime
+- `next` (Next.js core web vitals)
+- `plugin:tailwindcss/recommended`
+- `plugin:@typescript-eslint/recommended`
+- `plugin:security/recommended-legacy`
+
+### Key rules to follow
+
+- **Quotes:** Single quotes for strings and JSX attributes (`prefer-single`)
+- **Indentation:** 2 spaces
+- **Semicolons:** Always required
+- **Trailing commas:** Not allowed
+- **Arrow functions:** Prefer arrow functions for callbacks; omit parens for single arguments
+- **Imports:** No duplicate imports; prefer template literals over string concatenation
+- **Functions:** Use function declarations at the top level; arrow functions are allowed
+
+Run the linter before pushing:
+
+```bash
+pnpm lint
+```
+
+## Development workflow
+
+<Steps>
+  <Step title="Make your changes">
+    Edit files under `app/`, `components/`, or `styles/`. The dev server hot-reloads automatically.
+  </Step>
+  <Step title="Run the linter">
+    ```bash
+    pnpm lint
+    ```
+    Fix any errors before committing.
+  </Step>
+  <Step title="Commit using Conventional Commits">
+    ```bash
+    git add .
+    git commit -m "feat(blog): add reading time estimate to post header"
+    ```
+    `commitlint` will reject commits that don't match the conventional format.
+  </Step>
+  <Step title="Push your branch">
+    ```bash
+    git push origin feat/your-feature-name
+    ```
+  </Step>
+</Steps>
+
+## Submitting a pull request
+
+1. Open a pull request from your fork's branch to `main` on [github.com/skyhancloud/skyhan.cloud](https://github.com/skyhancloud/skyhan.cloud).
+2. Write a clear title that follows the same Conventional Commits format as your commit messages.
+3. Describe **what** changed and **why**. Include screenshots for visual changes.
+4. Update any documentation affected by your change.
+5. The maintainers will review your PR and provide feedback. Once approved, it will be merged.
+
+<Note>
+All contributions are licensed under the [GPL v3 License](https://github.com/skyhancloud/skyhan.cloud/blob/main/LICENSE). By opening a pull request you agree to license your contribution under those terms.
+</Note>
+
+## Reporting issues
+
+If you find a bug or want to suggest a feature, open an issue at [github.com/skyhancloud/skyhan.cloud/issues](https://github.com/skyhancloud/skyhan.cloud/issues). Include:
+
+- A clear description of the problem or request
+- Steps to reproduce (for bugs)
+- Relevant error messages or screenshots
+
+## Code of conduct
+
+All contributors are expected to follow the project's [Code of Conduct](https://github.com/skyhancloud/skyhan.cloud/blob/main/.github/CODE_OF_CONDUCT.md). Participation in this project is a harassment-free experience for everyone. Unacceptable behavior includes personal attacks, derogatory comments, public or private harassment, and publishing others' private information without permission.
+
+Instances of unacceptable behavior can be reported to the project maintainers. All reports will be reviewed and investigated confidentially.

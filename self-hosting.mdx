@@ -1,0 +1,111 @@
+---
+title: "Self-hosting"
+description: "Run skyhan.cloud on your own machine or server."
+---
+
+## Prerequisites
+
+Before you begin, make sure you have the following installed:
+
+- **Node.js** — [nodejs.org/en/download](https://nodejs.org/en/download/)
+- **pnpm** — [pnpm.io/installation](https://pnpm.io/installation)
+- **Git** — [git-scm.com/downloads](https://git-scm.com/downloads)
+
+## Installation
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the source code to your local machine:
+
+    ```bash
+    git clone https://github.com/skyhancloud/skyhan.cloud.git
+    ```
+  </Step>
+
+  <Step title="Navigate to the project directory">
+    ```bash
+    cd skyhan.cloud
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    pnpm install
+    ```
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy `.env.example` to `.env`:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Then open `.env` and fill in your values. See the [environment variables](#environment-variables) section below for details.
+  </Step>
+
+  <Step title="Start the server">
+    Choose between development and production mode:
+
+    <CodeGroup>
+
+    ```bash Development
+    pnpm dev
+    ```
+
+    ```bash Production
+    pnpm build && pnpm start
+    ```
+
+    </CodeGroup>
+
+    The site will be available at `http://localhost:3000`.
+  </Step>
+</Steps>
+
+## Environment variables
+
+All environment variables are optional. The site runs without any of them set.
+
+| Variable | Description | Required |
+| --- | --- | --- |
+| `RYBBIT_ANALYTICS_SITE_ID` | Your Rybbit analytics site ID. | No |
+| `RYBBIT_ANALYTICS_URL` | The base URL of your Rybbit instance (e.g. `https://app.rybbit.io`). | No |
+
+<Note>
+  Analytics are only loaded in **production** (`NODE_ENV=production`). In development, the Rybbit script is replaced with a no-op stub so no requests are made.
+</Note>
+
+### Rybbit analytics setup
+
+The site uses [Rybbit](https://www.rybbit.io) for privacy-friendly analytics. To enable it:
+
+1. Create an account at [rybbit.io](https://www.rybbit.io).
+2. Add your site and copy the **site ID** and **script URL**.
+3. Set `RYBBIT_ANALYTICS_SITE_ID` and `RYBBIT_ANALYTICS_URL` in your `.env` file.
+
+<Tip>
+  If you don't want analytics, leave both variables empty. The analytics script will not be injected and no tracking will occur.
+</Tip>
+
+## Development vs production
+
+| | Development | Production |
+| --- | --- | --- |
+| Command | `pnpm dev` | `pnpm build && pnpm start` |
+| Bundler | Turbopack (fast refresh) | Next.js optimized build |
+| Analytics | Disabled (stub) | Enabled if env vars are set |
+| Performance | Not optimized | Fully optimized |
+
+```bash
+# Development — fast refresh via Turbopack
+pnpm dev
+
+# Production — build then serve
+pnpm build
+pnpm start
+```
+
+<Warning>
+  Always run `pnpm build` before `pnpm start`. Running `pnpm start` without a prior build will fail.
+</Warning>

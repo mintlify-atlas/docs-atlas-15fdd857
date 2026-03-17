@@ -1,0 +1,147 @@
+---
+title: 'Projects & Works'
+description: 'How the Projects and Works sections are configured, how to add entries, and how analytics events are tracked.'
+---
+
+The homepage displays two curated lists — **Projects** and **Works** — each rendered by a dedicated client component. Both components follow the same pattern: a hardcoded `data` array inside the component file, rendered as a list of clickable cards with hover highlights.
+
+## Data structure
+
+Each entry in both components uses the same shape:
+
+```typescript
+type Entry = {
+  name: string;
+  link?: string;        // optional — omit for entries with no public URL
+  description: string;
+};
+```
+
+When `link` is absent the card still renders but `href` falls back to `'#'`.
+
+## Projects component
+
+**File:** `components/projects.tsx`
+
+The `data` array is defined inline inside the component function. The current entries are:
+
+```tsx
+const data = [
+  {
+    name: 'SubWatch',
+    link: 'https://subwatch.net',
+    description: 'Track your subscriptions and manage your expenses. A personal project to help me stay on top of my subscriptions.'
+  },
+  {
+    name: 'discord.place',
+    link: 'https://discord.place',
+    description: 'A hub for everything Discord. No matter what you\'re looking for, you can find it here. A project I\'m proud to develop and maintain.'
+  },
+  {
+    name: 'lantern.rest',
+    link: 'https://github.com/discordplace/lantern',
+    description: 'Broadcast your active Discord status to an API endpoint and WebSocket connection. Ready to use or self-host.'
+  },
+  {
+    name: 'discordsfx.com',
+    link: 'https://discord.place/sounds',
+    description: 'Find short mp3 files for Discord Soundboard. My first Next.js project, now part of discord.place.'
+  },
+  {
+    name: 'Distalk Bot',
+    link: 'https://discord.com/oauth2/authorize?client_id=1243615735272570912',
+    description: 'A Discord bot for anonymous conversations. Ensures privacy and secure interactions. Made with Typescript and MongoDB.'
+  }
+];
+```
+
+### Analytics event
+
+Every project card fires a Rybbit analytics event on click:
+
+```tsx
+onClick={() => {
+  if ('rybbit' in window) window.rybbit.event('project_link_click', {
+    project_name: item.name,
+    project_link: item.link
+  });
+}}
+```
+
+The event name is `project_link_click` and it carries `project_name` and `project_link` as properties.
+
+## Works component
+
+**File:** `components/works.tsx`
+
+The Works component is structurally identical to Projects. The current entries are:
+
+```tsx
+const data = [
+  {
+    name: 'Frontend Developer at Kişilerarası İlişkiler Psikoterapisi Derneği',
+    link: 'https://kisilerarasiiliskilerterapisi.com/',
+    description: 'I modernised the website by preserving the old content, designed a website from scratch and turned it into an application with React & Tailwind CSS.'
+  },
+  {
+    name: 'Frontend and Backend Developer at barisyasaman.com',
+    link: 'https://secim.barisyasaman.com',
+    description: 'A site that simulates the Turkish elections and displays the results live on the Turkey map, connected to a Discord bot. I used React, SQLite, Tailwind CSS and Express.'
+  },
+  {
+    name: 'Discord Bots',
+    // no link — renders href="#"
+    description: 'I have developed many Discord bots for various servers that used by thousands of users. Working with Discord.js and MongoDB.'
+  },
+  {
+    name: 'Bark.js',
+    link: 'https://github.com/skyhancloud/bark.js',
+    description: 'Bark.js is a simple JavaScript library for sending custom notifications to your iPhone using the bark.day.app iOS App.'
+  }
+];
+```
+
+### Analytics event
+
+The Works component fires a separate Rybbit event:
+
+```tsx
+onClick={() => {
+  if ('rybbit' in window) window.rybbit.event('work_link_click', {
+    work_name: item.name,
+    work_link: item.link
+  });
+}}
+```
+
+The event name is `work_link_click` with `work_name` and `work_link` properties.
+
+## How to add or edit an entry
+
+<Steps>
+  <Step title="Open the component file">
+    For a project, open `components/projects.tsx`. For a work entry, open `components/works.tsx`.
+  </Step>
+  <Step title="Edit the data array">
+    Add a new object to the `data` array inside the component function, or modify an existing entry. Only `name` and `description` are required — `link` is optional.
+
+    ```tsx
+    {
+      name: 'My New Project',
+      link: 'https://example.com',
+      description: 'A short description of what the project does.'
+    }
+    ```
+  </Step>
+  <Step title="Save and verify">
+    The component re-renders automatically. Entries appear in the order they are defined in the array — no sorting is applied.
+  </Step>
+</Steps>
+
+<Note>
+  There is no external data source or CMS. All content lives directly in the component file. Changes require a code edit and a new deployment.
+</Note>
+
+## Render behaviour
+
+Both components render each entry as a `<Link>` from `next-view-transitions`, giving the hover cards a view-transition animation when navigating. The highlight overlay is a pseudo-layer positioned behind each card that fades in on hover using Tailwind's `group-hover:opacity-100`.

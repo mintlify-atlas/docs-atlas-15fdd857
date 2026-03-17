@@ -1,0 +1,263 @@
+---
+title: 'Blog'
+description: 'How the MDX-based blog system works, how to create a new post, and what custom components are available.'
+---
+
+Blog posts are MDX files living in the Next.js `app/` directory. Each post is a folder containing a `page.mdx` file. The blog listing on the homepage is generated at build time by reading the filesystem and dynamically importing each post's exported `metadata`.
+
+## Directory structure
+
+```
+app/
+└── blogs/
+    ├── layout.tsx                                          # shared blog layout
+    ├── unlocking-the-potential-of-ios-notifications-with-bark-js/
+    │   └── page.mdx
+    └── using-lantern-rest-to-display-your-discord-presence/
+        └── page.mdx
+```
+
+The URL for a post is `/blogs/<folder-name>`. The folder name becomes the slug.
+
+## Frontmatter schema
+
+Each `page.mdx` exports a `metadata` object via `generateMetadata`. The fields recognised by the blog listing are:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `title` | `string` | Yes | Post title shown in the listing and browser tab. |
+| `description` | `string` | No | Short summary shown under the title in the listing. |
+| `date` | `string` (ISO 8601) | No | Used to sort posts newest-first. Format: `YYYY-MM-DD`. |
+
+```tsx
+import generateMetadata from '@/utils/generateMetadata';
+
+export const metadata = generateMetadata({
+  title: 'My Post Title',
+  description: 'A brief summary of the post.',
+  date: '2025-06-01'
+});
+```
+
+`generateMetadata` sets `metadataBase`, Open Graph tags, and default keywords automatically. The `date` field is a custom extension added to the Next.js `Metadata` type via the declaration in `types/index.d.ts`:
+
+```typescript
+declare module 'next' {
+  export interface Metadata {
+    date?: string;
+  }
+}
+```
+
+## How the listing works
+
+`components/blogs/index.tsx` is an **async Server Component** that reads `app/blogs/` from the filesystem at request time:
+
+```tsx
+export default async function Blogs() {
+  const blogFiles = fs.readdirSync('app/blogs');
+
+  const blogs = await Promise.all(
+    blogFiles
+      .filter(file => fs.statSync(`app/blogs/${file}`).isDirectory())
+      .map(async file => {
+        const blog = await import(`../../app/blogs/${file}/page.mdx`);
+        return {
+          id: file.replace(/\.mdx/, ''),
+          metadata: blog.metadata as Metadata,
+          component: blog.default as React.FC
+        };
+      })
+  );
+
+  return blogs
+    .sort((a, b) =>
+      new Date(b.metadata?.date || 0).getTime() -
+      new Date(a.metadata?.date || 0).getTime()
+    )
+    .map(item => { /* render each post card */ });
+}
+```
+
+Only directories inside `app/blogs/` are included — `layout.tsx` and any other non-directory files are filtered out.
+
+<Tip>
+  The listing is sorted by `date` descending. If two posts share the same date they appear in filesystem order. Always set a `date` in your frontmatter.
+</Tip>
+
+## Creating a new blog post
+
+<Steps>
+  <Step title="Create the post directory">
+    Add a new folder under `app/blogs/` using a kebab-case slug:
+
+    ```bash
+    mkdir app/blogs/my-new-post
+    ```
+  </Step>
+  <Step title="Create page.mdx">
+    Create `app/blogs/my-new-post/page.mdx` and add the metadata export at the top:
+
+    ```mdx
+    import generateMetadata from '@/utils/generateMetadata';
+
+    export const metadata = generateMetadata({
+      title: 'My New Post',
+      description: 'What this post is about.',
+      date: '2025-06-01'
+    });
+
+    Your post content starts here.
+
+    ## A section heading
+
+    More content...
+    ```
+  </Step>
+  <Step title="Import components as needed">
+    Import `CodeBlock` or `Image` at the top of the file if you need them (see the [Custom components](#custom-components) section below).
+  </Step>
+  <Step title="Verify the listing">
+    Start the dev server and navigate to `/` — your post should appear in the Blog Posts section, sorted by date.
+  </Step>
+</Steps>
+
+## Blog layout
+
+`app/blogs/layout.tsx` wraps every blog post. It provides:
+
+- A header linking back to the homepage with the avatar and author name.
+- A hidden `DiscordStatus` widget (rendered with `hide={true}`, so it still fetches data for the store but is not visible).
+- Clickable headings — each `h2`–`h6` registers a click handler that smooth-scrolls to the heading and pushes the anchor to the URL.
+- Anchor restoration on load — if the URL contains a hash on mount, the page scrolls to that element.
+- Tailwind Typography (`prose`) styles applied to the content wrapper.
+
+## Custom MDX components
+
+### Registered in `mdx-components.tsx`
+
+The global MDX component map is defined in `mdx-components.tsx`. These replacements apply to every blog post automatically:
+
+| MDX element | Replacement behaviour |
+|---|---|
+| `h2`–`h6` | Renders with an auto-generated `id` (lowercased, spaces replaced with `-`) and a link icon that appears on hover. |
+| `a` | Renders as a `next-view-transitions` `<Link>` with dotted underline and an outbound arrow icon. |
+| `code` | Inline code gets a bordered pill style (`border border-primary`, `bg-secondary`, rounded). |
+
+```tsx
+// mdx-components.tsx (excerpt)
+export function useMDXComponents(components: MDXComponents): MDXComponents {
+  return {
+    ...components,
+    h2: ({ children, ...props }) => <Heading {...props} level={2}>{children}</Heading>,
+    // h3–h6 follow the same pattern
+    a: ({ children, href }) => (
+      <Link href={href || '#'} className='...'>
+        {children}
+        <MdArrowOutward className='ml-1 inline-block' size={14} />
+      </Link>
+    ),
+    code: ({ children, className }) => (
+      <code className={cn(className, 'px-1 py-0.5 border border-primary ...')}>
+        {children}
+      </code>
+    )
+  };
+}
+```
+
+### CodeBlock
+
+**File:** `components/blogs/code-block.tsx`
+
+A styled code block with a filename header bar, syntax highlighting via `react-syntax-highlighter` (Prism), and a copy button. The colour scheme switches between `gruvboxDark` and `gruvboxLight` based on the user's system preference.
+
+```typescript
+interface CodeBlockProps {
+  children: React.ReactNode;  // the raw code string
+  id: string;                 // unique identifier (used by Rybbit copy event)
+  icon: React.ReactNode;      // icon displayed in the header bar
+  fileName: string;           // filename shown in the header bar
+  language: string;           // language for syntax highlighting
+  dimmed?: boolean;           // default true; controls background tint
+}
+```
+
+Usage inside a `.mdx` file:
+
+```mdx
+import CodeBlock from '@/components/blogs/code-block';
+import { SiTypescript } from 'react-icons/si';
+
+<CodeBlock
+  id='my-example'
+  icon={<SiTypescript />}
+  fileName="index.ts"
+  language="typescript"
+>
+{`const greeting = 'Hello, world!';`}
+</CodeBlock>
+```
+
+### CopyCodeButton
+
+**File:** `components/blogs/copy-code-button.tsx`
+
+Rendered inside `CodeBlock` automatically — you do not need to use it directly. It copies the code string to the clipboard and fires a Rybbit analytics event:
+
+```typescript
+interface CopyCodeButtonProps {
+  id: string;    // matches the CodeBlock id
+  code: string;  // the code string to copy
+}
+```
+
+```tsx
+// Rybbit event fired on copy
+if ('rybbit' in window) window.rybbit.event('copy_code', { id });
+```
+
+After a successful copy the icon switches from `BiSolidCopy` to `FaCheck` for 1500 ms.
+
+### Image
+
+**File:** `components/blogs/image.tsx`
+
+A centred image with a rounded border and a caption rendered from the `alt` prop.
+
+```typescript
+interface ImageProps {
+  src: string;
+  alt: string;
+  width?: number;   // default 600
+  height?: number;  // default 400
+}
+```
+
+Usage:
+
+```mdx
+import Image from '@/components/blogs/image';
+
+<Image
+  src='https://i.imgur.com/xcs8YFq.png'
+  alt='Bark iOS App Logo'
+/>
+```
+
+## Existing posts
+
+<CardGroup cols={2}>
+  <Card
+    title="Unlocking the Potential of iOS Notifications with Bark.js"
+    icon="bell"
+  >
+    Published 2025-01-29. Introduces the Bark.js library for sending custom push notifications to iPhones. Demonstrates installation and basic usage with a TypeScript example.
+  </Card>
+  <Card
+    title="Using lantern.rest to Display Your Discord Presence"
+    icon="wifi"
+  >
+    Published 2024-12-01. Explains the Lantern service, its REST API and WebSocket protocol, and shows a JavaScript implementation for embedding live Discord presence on a website.
+  </Card>
+</CardGroup>

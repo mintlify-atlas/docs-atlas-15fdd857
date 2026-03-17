@@ -1,0 +1,206 @@
+---
+title: 'Discord status'
+description: 'How the Discord status widget works, what it displays, and how to configure it with your own user ID.'
+---
+
+The `DiscordStatus` component fetches your live Discord presence from [lantern.rest](https://lantern.rest) and renders a small status indicator in the site header. It supports showing a spinning album cover when Spotify is active and a "last seen" timestamp when you are offline.
+
+## How it works
+
+On mount the component makes a single `GET` request to the lantern.rest REST API:
+
+```
+GET https://lantern.rest/api/v1/users/:userId
+```
+
+The response is typed as `LanternUserResponse`. Depending on the `status` field in the response, the component transitions between four internal states:
+
+| State | Condition |
+|---|---|
+| `loading` | Initial state before the fetch completes. |
+| `online` | API returned a non-`offline` status. |
+| `offline` | API returned `status: 'offline'`. |
+| `error` | The fetch threw an exception or returned a non-OK response. |
+
+Both `loading` and `error` are treated the same as `offline` in the UI — the indicator shows grey and the label reads "Offline".
+
+## Component API
+
+**File:** `components/discord-status.tsx`
+
+```typescript
+type DiscordStatusProps = {
+  userId: string;   // Discord user ID to look up
+  hide?: boolean;   // if true the component is hidden (default: false)
+}
+```
+
+The `hide` prop is useful when the component needs to run (to populate the Zustand store) but should not be visible — for example, in the blog layout:
+
+```tsx
+// app/blogs/layout.tsx
+<DiscordStatus
+  userId='957840712404193290'
+  hide={true}
+/>
+```
+
+## Configuring your user ID
+
+The component is rendered in two places. Both pass the Discord user ID as a prop:
+
+<CodeGroup>
+
+```tsx app/page.tsx
+<DiscordStatus userId='957840712404193290' />
+```
+
+```tsx app/blogs/layout.tsx
+<DiscordStatus
+  userId='957840712404193290'
+  hide={true}
+/>
+```
+
+</CodeGroup>
+
+To use a different Discord account, replace `'957840712404193290'` with your own Discord user ID in both files.
+
+<Warning>
+  Your Discord account must be registered with lantern.rest and have the Lantern client running for live status data to be available. See the [lantern.rest GitHub repository](https://github.com/discordplace/lantern) for setup instructions.
+</Warning>
+
+## Spotify integration
+
+When the user is online and Spotify is active on their Discord presence, the component renders a spinning album cover alongside the track and artist name. This section is only visible on `sm` and wider screens (hidden on mobile).
+
+```tsx
+{!isOffline && spotify && (
+  <div className='hidden items-center gap-x-2 sm:flex'>
+    <Image
+      src={spotify.album_cover}
+      height={20}
+      width={20}
+      alt={`${spotify.song} by ${
+        Array.isArray(spotify.artist)
+          ? spotify.artist.join(', ')
+          : spotify.artist
+      }`}
+      className='size-4 animate-spin rounded-full [animation-duration:3s]'
+    />
+
+    <div className='flex items-center gap-x-1 text-xs'>
+      <span className='text-tertiary'>Listening to</span>
+      <div className='max-w-[100px] truncate'>{spotify.song}</div>
+      <span className='text-tertiary'>by</span>
+      {Array.isArray(spotify.artist)
+        ? spotify.artist.join(', ')
+        : spotify.artist}
+    </div>
+  </div>
+)}
+```
+
+## Last seen timestamp
+
+When offline and `last_seen_at` is present in the API response, the component shows a relative time string (e.g. "3 hours ago") above the status dot:
+
+```tsx
+{isOffline && lastSeenAt && (
+  <div className='flex items-center gap-x-1 text-xs text-tertiary'>
+    Last seen <span className='text-secondary'>{getRelativeTime(lastSeenAt)}</span>
+  </div>
+)}
+```
+
+The `lastSeenAt` value is stored as a Unix millisecond timestamp derived from `data.last_seen_at.unix * 1000`.
+
+## Analytics event
+
+Clicking the status widget fires a Rybbit analytics event with no additional properties:
+
+```tsx
+onClick={() => {
+  if ('rybbit' in window) window.rybbit.event('discord_status_click');
+}}
+```
+
+The entire widget is a link pointing to `https://lantern.rest` and is wrapped in a tooltip that reads "Discord status powered by lantern.rest".
+
+## Zustand store
+
+**File:** `stores/discord-user.ts`
+
+After a successful fetch, the raw `LanternUserResponse` is written to a Zustand store. This makes the full user data available to other components without re-fetching.
+
+```typescript
+interface DiscordUserStore {
+  data: LanternUserResponse | null;
+  setData: (data: LanternUserResponse) => void;
+}
+
+export const useDiscordUserStore = create<DiscordUserStore>(set => ({
+  data: null,
+  setData: (data: LanternUserResponse) => set({ data })
+}));
+```
+
+Consume it in any client component:
+
+```tsx
+import { useDiscordUserStore } from '@/stores/discord-user';
+
+const data = useDiscordUserStore(state => state.data);
+```
+
+## Type reference
+
+The full set of types is defined in `types/index.d.ts`.
+
+```typescript
+export type LanternSpotify = {
+  track_id: string;
+  song: string;
+  artist: string | string[];
+  album: string;
+  album_cover: string;
+  start_time: { unix: number; raw: string };
+  end_time:   { unix: number; raw: string };
+  time: {
+    current_human_readable: string;
+    total_human_readable: string;
+  };
+};
+
+export type BaseUserType = {
+  metadata: {
+    id: string;
+    username: string;
+    discriminator: string;
+    global_name: string | null;
+    avatar: string | null;
+    avatar_url: string | null;
+    display_avatar_url: string;
+    bot: boolean;
+    flags: {
+      human_readable: string[];
+      bitfield: number | null | undefined;
+    };
+    monitoring_since: {
+      unix: number | null;
+      raw: Date | null;
+    };
+  };
+  active_platforms: ClientPresenceStatusData;
+  activities: (CustomStatusActivity | OtherActivity)[];
+  storage: Map<string, string> | {};
+};
+
+export type LanternUserResponse =
+  | (BaseUserType & { status: 'offline'; last_seen_at: { unix: number; raw: Date } })
+  | (BaseUserType & { status: Exclude<string, 'offline'>; last_seen_at: { unix: number; raw: Date } });
+```
+
+<Info>
+  `active_platforms`, `CustomStatusActivity`, and `OtherActivity` are types defined by the lantern.rest client library and are not declared in this codebase directly.
+</Info>

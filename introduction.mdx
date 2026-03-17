@@ -1,0 +1,53 @@
+---
+title: Introduction
+description: skyhan.cloud — the personal portfolio of Gökhan Bulut, built with Next.js 15 and Tailwind CSS.
+---
+
+# skyhan.cloud
+
+skyhan.cloud is an open-source personal portfolio website built by [Gökhan Bulut](https://skyhan.cloud), a TypeScript developer and freelancer from Turkey. The site showcases projects, work history, and a technical blog — all powered by Next.js 15, MDX, and Tailwind CSS.
+
+<CardGroup cols={2}>
+  <Card title="Self-Hosting" icon="server" href="/self-hosting">
+    Clone the repo and run your own instance in minutes
+  </Card>
+  <Card title="Projects" icon="folder-open" href="/features/projects">
+    Explore the projects showcase component
+  </Card>
+  <Card title="Blog" icon="newspaper" href="/features/blog">
+    MDX-powered blog with syntax highlighting
+  </Card>
+  <Card title="Discord Status" icon="discord" href="/features/discord-status">
+    Live Discord presence via lantern.rest
+  </Card>
+</CardGroup>
+
+## What's included
+
+skyhan.cloud is a fully featured personal portfolio site. Here's what it ships with:
+
+- **Homepage** — Bio, inline tooltips, projects list, work history, blog posts, and a contact section
+- **Blog** — MDX-based articles with syntax-highlighted code blocks, images, and copy buttons
+- **Discord status** — Real-time online/offline indicator and Spotify listening status powered by [lantern.rest](https://lantern.rest)
+- **Analytics** — [Rybbit](https://www.rybbit.io) analytics with custom event tracking
+- **View transitions** — Smooth animated page navigation via `next-view-transitions`
+- **Light/dark mode** — Automatic theming based on OS preference, using CSS variables
+- **Resume** — Static PDF served at `/resume.pdf`
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 15 (App Router, Turbopack) |
+| Styling | Tailwind CSS 3.4 |
+| Content | MDX via `@next/mdx` |
+| State | Zustand |
+| UI primitives | Radix UI (Tooltip) |
+| Analytics | Rybbit |
+| Discord API | lantern.rest |
+| Icons | react-icons |
+| Date formatting | date-fns |
+
+## License
+
+skyhan.cloud is licensed under the [GNU General Public License v3.0](https://github.com/skyhancloud/skyhan.cloud/blob/main/LICENSE). You are free to use, modify, and distribute this project under the same license.

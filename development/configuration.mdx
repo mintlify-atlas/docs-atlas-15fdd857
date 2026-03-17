@@ -1,0 +1,203 @@
+---
+title: Configuration
+description: Reference for all configuration options in skyhan.cloud — environment variables, Next.js settings, Tailwind theme tokens, CSS variables, and TypeScript config.
+---
+
+## Environment variables
+
+Environment variables are validated at startup using Zod via `instrumentation.ts`. Copy `.env.example` to `.env.local` and fill in the values before running the development server.
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Description | Required | Example |
+|---|---|---|---|
+| `RYBBIT_ANALYTICS_SITE_ID` | Your Rybbit site identifier, used to attribute analytics events to your site | Optional | `12345` |
+| `RYBBIT_ANALYTICS_URL` | The base URL of your self-hosted Rybbit instance | Optional | `https://analytics.example.com` |
+
+<Note>
+Analytics will not be injected into the layout if these variables are absent. The site runs fully without them.
+</Note>
+
+---
+
+## next.config.ts
+
+The Next.js configuration lives in `next.config.ts` at the project root.
+
+### MDX support
+
+MDX is enabled via `@next/mdx`. The `pageExtensions` array is extended to allow MDX files to be treated as pages alongside TypeScript and JavaScript files.
+
+```ts
+pageExtensions: ['tsx', 'mdx', 'ts', 'js']
+```
+
+### Image remote patterns
+
+Next.js restricts which external domains can serve optimized images. The following hostnames are allowlisted:
+
+| Hostname | Protocol | Path restriction | Purpose |
+|---|---|---|---|
+| `i.scdn.co` | Any | None | Spotify album artwork |
+| `i.imgur.com` | Any | None | Imgur-hosted blog images |
+| `cdn.discordapp.com` | `https` | `/avatars/957840712404193290/*` | Discord user avatar |
+
+### React strict mode
+
+`reactStrictMode` is set to `false`. This avoids double-invocation of effects during development, which is relevant for components that connect to external APIs like lantern.rest.
+
+---
+
+## tailwind.config.ts
+
+Tailwind is configured with a custom theme that maps directly to the CSS variables defined in `styles/main.css`.
+
+### Dark mode
+
+Dark mode uses the `media` strategy — the active theme is determined entirely by the user's OS preference (`prefers-color-scheme`).
+
+### Custom fonts
+
+| Token | CSS variable | Fallback | Usage |
+|---|---|---|---|
+| `font-geist` | `--font-geist-sans` | `sans` | Primary UI font |
+| `font-faustina` | `--font-faustina` | `serif` | Display/heading font |
+
+### Custom breakpoint
+
+| Name | Value | Purpose |
+|---|---|---|
+| `mobile` | `420px` | Small mobile viewport adjustments, below Tailwind's default `sm` (640px) |
+
+### Color tokens
+
+All color utilities reference CSS variables so they respond automatically to light/dark mode.
+
+**Text colors**
+
+| Token | CSS variable |
+|---|---|
+| `text-primary` | `--text-primary` |
+| `text-secondary` | `--text-secondary` |
+| `text-tertiary` | `--text-tertiary` |
+
+**Background colors**
+
+| Token | CSS variable |
+|---|---|
+| `bg-background` | `--bg-background` |
+| `bg-secondary` | `--bg-secondary` |
+| `bg-tertiary` | `--bg-tertiary` |
+| `bg-quaternary` | `--bg-quaternary` |
+
+**Border colors**
+
+| Token | CSS variable |
+|---|---|
+| `border-primary` | `--border-primary` |
+
+The same background tokens are also available as `gradientColorStops` and `fill` utilities.
+
+### Animations
+
+| Name | Description |
+|---|---|
+| `animate-marquee` | Horizontal scrolling ticker; speed controlled via `--duration` and gap via `--gap` CSS variables |
+| `animate-marquee-vertical` | Vertical scrolling ticker with the same controls |
+
+### Plugins
+
+`@tailwindcss/typography` is included for MDX blog content styling.
+
+`hoverOnlyWhenSupported` is enabled under `future` flags, which wraps hover utilities in a `@media (hover: hover)` query — preventing sticky hover states on touch devices.
+
+---
+
+## CSS variables
+
+All design tokens are defined in `styles/main.css` as raw RGB channel values (e.g. `250, 248, 245`). Components consume them via `rgba(var(--token))`.
+
+### Accent
+
+The accent color is a single global value not split by mode:
+
+| Variable | Value (RGB) | Hex equivalent |
+|---|---|---|
+| `--accent-primary` | `168, 104, 72` | `#A86848` |
+
+### Light mode values
+
+Applied under `@media (prefers-color-scheme: light)`.
+
+**Backgrounds**
+
+| Variable | RGB value | Notes |
+|---|---|---|
+| `--bg-background` | `250, 248, 245` | Page background — warm off-white |
+| `--bg-secondary` | `242, 240, 236` | Card / panel backgrounds |
+| `--bg-tertiary` | `234, 232, 228` | Subtle dividers, hover states |
+| `--bg-quaternary` | `225, 223, 219` | Deepest surface layer |
+
+**Text**
+
+| Variable | RGB value | Notes |
+|---|---|---|
+| `--text-primary` | `40, 38, 36` | Main body text |
+| `--text-secondary` | `82, 80, 76` | Supporting text, labels |
+| `--text-tertiary` | `120, 118, 112` | Muted/disabled text |
+| `--text-placeholder` | `145, 142, 138` | Input placeholder text |
+
+**Borders**
+
+| Variable | RGB value |
+|---|---|
+| `--border-primary` | `215, 212, 208` |
+
+### Dark mode values
+
+Applied under `@media (prefers-color-scheme: dark)`.
+
+**Backgrounds**
+
+| Variable | RGB value | Notes |
+|---|---|---|
+| `--bg-background` | `38, 36, 34` | Page background — dark warm charcoal |
+| `--bg-secondary` | `48, 46, 44` | Card / panel backgrounds |
+| `--bg-tertiary` | `58, 56, 54` | Subtle dividers, hover states |
+| `--bg-quaternary` | `70, 68, 65` | Deepest surface layer |
+
+**Text**
+
+| Variable | RGB value | Notes |
+|---|---|---|
+| `--text-primary` | `232, 228, 220` | Main body text |
+| `--text-secondary` | `198, 194, 188` | Supporting text, labels |
+| `--text-tertiary` | `160, 156, 150` | Muted/disabled text |
+| `--text-placeholder` | `130, 126, 120` | Input placeholder text |
+
+**Borders**
+
+| Variable | RGB value |
+|---|---|
+| `--border-primary` | `85, 82, 78` |
+
+---
+
+## TypeScript config
+
+The TypeScript configuration is in `tsconfig.json`.
+
+| Option | Value | Notes |
+|---|---|---|
+| `target` | `ES2017` | Output target for transpiled code |
+| `strict` | `true` | Enables all strict type-checking options |
+| `moduleResolution` | `bundler` | Aligns with Next.js / Turbopack resolution |
+| `jsx` | `preserve` | JSX is left for Next.js to transform |
+| `incremental` | `true` | Enables incremental compilation via `.tsbuildinfo` |
+| `paths` | `@/* → ./*` | Root-relative imports using the `@/` alias |
+| `resolveJsonModule` | `true` | Allows importing `.json` files directly |
+| `isolatedModules` | `true` | Required for compatibility with SWC/Turbopack |
+
+The Next.js TypeScript plugin is registered under `compilerOptions.plugins`, which enables editor support for Next.js-specific warnings and type checking.
