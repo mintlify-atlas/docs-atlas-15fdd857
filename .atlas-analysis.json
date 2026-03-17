@@ -1,0 +1,53 @@
+{
+  "projectType": "frontend",
+  "projectName": "skyhan.cloud",
+  "projectDescription": "Personal portfolio website for Gökhan Bulut, a TypeScript developer, built with Next.js 15 and Tailwind CSS, featuring a blog, projects showcase, and live Discord status via lantern.rest.",
+  "theme": "willow",
+  "primaryColor": "#A86848",
+  "lightColor": "#FAF8F5",
+  "darkColor": "#262422",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "self-hosting"]
+          },
+          {
+            "group": "Features",
+            "pages": ["features/projects", "features/blog", "features/discord-status"]
+          },
+          {
+            "group": "Development",
+            "pages": ["development/configuration", "development/contributing", "development/changelog"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Personal portfolio with bio, projects showcase, and work history",
+    "Blog system powered by MDX for rich content authoring",
+    "Live Discord online/offline status via lantern.rest API",
+    "Spotify listening status display when active",
+    "Rybbit analytics integration with custom event tracking",
+    "Light/dark mode support based on OS preference",
+    "View transitions for smooth page navigation",
+    "Inline tooltips for contextual definitions and links"
+  ],
+  "publicApiSurface": [
+    "GET https://lantern.rest/api/v1/users/:userId — Discord presence data",
+    "app/page.tsx — Main portfolio homepage",
+    "app/blogs/[slug]/page.mdx — Individual blog post pages",
+    "components/discord-status.tsx — DiscordStatus component",
+    "components/projects.tsx — Projects list component",
+    "components/works.tsx — Work history component",
+    "components/blogs/index.tsx — Blog listing component",
+    "components/inline-quote.tsx — InlineQuote component with tooltip",
+    "components/avatar.tsx — Avatar component",
+    "utils/cn.ts — Tailwind class merging utility",
+    "utils/getRelativeTime.ts — Relative timestamp formatting utility"
+  ]
+}
